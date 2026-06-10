@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any
 
@@ -19,12 +20,10 @@ memory_exporter = telemetry.in_memory_exporter
 
 tool_simulator = ToolSimulator()
 
-
 class FlightSearchResponse(BaseModel):
     flights: list[dict[str, Any]] = Field(default_factory=list)
     total_results: int = Field(default=0)
     status: str = Field(default="success")
-
 
 class BookFlightResponse(BaseModel):
     booking_id: str = Field(default="")
@@ -32,30 +31,25 @@ class BookFlightResponse(BaseModel):
     status: str = Field(default="success")
     message: str = Field(default="")
 
-
 class BookingConfirmationResponse(BaseModel):
     confirmation_sent: bool = Field(default=False)
     method: str = Field(default="email")
     message: str = Field(default="")
-
 
 @tool_simulator.tool(output_schema=FlightSearchResponse)
 def search_flights(origin: str, destination: str, date: str) -> dict[str, Any]:
     """Search for available flights between two cities on a given date."""
     pass
 
-
 @tool_simulator.tool(output_schema=BookFlightResponse)
 def book_flight(flight_id: str) -> dict[str, Any]:
     """Book a specific flight by its flight ID."""
     pass
 
-
 @tool_simulator.tool(output_schema=BookingConfirmationResponse)
 def send_booking_confirmation(booking_id: str = "", flight_id: str = "", method: str = "email") -> dict[str, Any]:
     """Send booking confirmation to the user via email or SMS."""
     pass
-
 
 chaos_plugin = ChaosPlugin()
 
@@ -87,7 +81,6 @@ chaos_cases = [
 _search_tool = tool_simulator.get_tool("search_flights")
 _book_tool = tool_simulator.get_tool("book_flight")
 _confirm_tool = tool_simulator.get_tool("send_booking_confirmation")
-
 
 def travel_agent_task(case: ChaosCase) -> dict:
     """Run the travel agent under chaos and return output + trajectory."""
@@ -127,11 +120,13 @@ def travel_agent_task(case: ChaosCase) -> dict:
 
     return {"output": output, "trajectory": session}
 
-
 experiment = ChaosExperiment(
     cases=chaos_cases,
     evaluators=[PartialCompletionEvaluator()],
 )
 
-report = experiment.run_evaluations(task=travel_agent_task)
-report.run_display()
+async def main():
+    report = await experiment.run_evaluations_async(task=travel_agent_task, max_workers=10)
+    report.run_display()
+
+asyncio.run(main())

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any
 
@@ -167,5 +168,8 @@ experiment = ChaosExperiment(
 )
 
 # Run: 8 chaos cases = 8 agent invocations
-report = experiment.run_evaluations(task=travel_agent_task)
-report.run_display()
+async def main():
+    report = await experiment.run_evaluations_async(task=travel_agent_task, max_workers=10)
+    report.run_display()
+
+asyncio.run(main())

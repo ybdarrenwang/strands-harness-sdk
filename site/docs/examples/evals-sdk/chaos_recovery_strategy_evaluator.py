@@ -6,8 +6,7 @@ from pydantic import BaseModel, Field
 
 from strands import Agent
 from strands_evals import StrandsEvalsTelemetry
-from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, Timeout
-from strands_evals.chaos.effects import ExecutionError
+from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, ExecutionError, Timeout
 from strands_evals.evaluators.chaos import RecoveryStrategyEvaluator
 from strands_evals.mappers import StrandsInMemorySessionMapper
 from strands_evals.simulation import ToolSimulator

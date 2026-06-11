@@ -7,7 +7,7 @@ sidebar:
 
 ## Overview
 
-The `RecoveryStrategyEvaluator` scores the quality of an agent's recovery actions when tools fail. It evaluates whether the agent attempts alternative approaches, retries appropriately, and varies its strategies rather than repeating the same failed action. A complete example can be found [here](https://github.com/strands-agents/docs/blob/main/docs/examples/evals-sdk/chaos_recovery_strategy_evaluator.py).
+The `RecoveryStrategyEvaluator` scores the quality of an agent's recovery actions when tools fail. It evaluates whether the agent attempts alternative approaches, retries appropriately, and varies its strategies rather than repeating the same failed action. A complete example can be found [here](https://github.com/strands-agents/harness-sdk/blob/main/site/docs/examples/evals-sdk/chaos_recovery_strategy_evaluator.py).
 
 ## Key Features
 
@@ -63,7 +63,7 @@ from pydantic import BaseModel, Field
 from strands import Agent
 from strands_evals import StrandsEvalsTelemetry
 from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, Timeout
-from strands_evals.chaos.effects import ExecutionError
+from strands_evals.chaos import ExecutionError
 from strands_evals.evaluators.chaos import RecoveryStrategyEvaluator
 from strands_evals.mappers import StrandsInMemorySessionMapper
 from strands_evals.simulation import ToolSimulator

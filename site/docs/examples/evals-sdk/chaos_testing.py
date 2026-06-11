@@ -11,12 +11,12 @@ from strands_evals.chaos import (
     ChaosExperiment,
     ChaosPlugin,
     CorruptValues,
+    ExecutionError,
     NetworkError,
     RemoveFields,
     Timeout,
     TruncateFields,
 )
-from strands_evals.chaos.effects import ExecutionError
 from strands_evals.evaluators import GoalSuccessRateEvaluator
 from strands_evals.mappers import StrandsInMemorySessionMapper
 from strands_evals.simulation import ToolSimulator

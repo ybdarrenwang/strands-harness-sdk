@@ -7,7 +7,7 @@ sidebar:
 
 ## Overview
 
-The `FailureCommunicationEvaluator` assesses how well an agent communicates failures to the user when tools or services fail. It uses an LLM-as-judge approach with a five-level scoring rubric to evaluate clarity, actionability, transparency, and tone of failure messages. A complete example can be found [here](https://github.com/strands-agents/docs/blob/main/docs/examples/evals-sdk/chaos_failure_communication_evaluator.py).
+The `FailureCommunicationEvaluator` assesses how well an agent communicates failures to the user when tools or services fail. It uses an LLM-as-judge approach with a five-level scoring rubric to evaluate clarity, actionability, transparency, and tone of failure messages. A complete example can be found [here](https://github.com/strands-agents/harness-sdk/blob/main/site/docs/examples/evals-sdk/chaos_failure_communication_evaluator.py).
 
 ## Key Features
 
@@ -63,7 +63,7 @@ from pydantic import BaseModel, Field
 from strands import Agent
 from strands_evals import StrandsEvalsTelemetry
 from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, Timeout
-from strands_evals.chaos.effects import NetworkError
+from strands_evals.chaos import NetworkError
 from strands_evals.evaluators.chaos import FailureCommunicationEvaluator
 from strands_evals.mappers import StrandsInMemorySessionMapper
 from strands_evals.simulation import ToolSimulator

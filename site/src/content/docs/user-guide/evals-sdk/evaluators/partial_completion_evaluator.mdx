@@ -7,7 +7,7 @@ sidebar:
 
 ## Overview
 
-The `PartialCompletionEvaluator` scores what fraction of the user's goal was achieved, returning a continuous 0.0 to 1.0 score. Unlike the binary `GoalSuccessRateEvaluator`, this evaluator captures partial progress when an agent completes some sub-steps of a multi-step task but cannot finish the rest. A complete example can be found [here](https://github.com/strands-agents/docs/blob/main/docs/examples/evals-sdk/chaos_partial_completion_evaluator.py).
+The `PartialCompletionEvaluator` scores what fraction of the user's goal was achieved, returning a continuous 0.0 to 1.0 score. Unlike the binary `GoalSuccessRateEvaluator`, this evaluator captures partial progress when an agent completes some sub-steps of a multi-step task but cannot finish the rest. A complete example can be found [here](https://github.com/strands-agents/harness-sdk/blob/main/site/docs/examples/evals-sdk/chaos_partial_completion_evaluator.py).
 
 ## Key Features
 
@@ -63,7 +63,7 @@ from pydantic import BaseModel, Field
 from strands import Agent
 from strands_evals import StrandsEvalsTelemetry
 from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, TruncateFields
-from strands_evals.chaos.effects import NetworkError
+from strands_evals.chaos import NetworkError
 from strands_evals.evaluators.chaos import PartialCompletionEvaluator
 from strands_evals.mappers import StrandsInMemorySessionMapper
 from strands_evals.simulation import ToolSimulator

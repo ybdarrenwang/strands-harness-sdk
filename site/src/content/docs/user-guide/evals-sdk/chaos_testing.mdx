@@ -7,7 +7,7 @@ sidebar:
 
 ## Overview
 
-Chaos testing systematically evaluates agent resilience by injecting controlled failures into tool execution. Using `ChaosPlugin`, `ChaosCase`, and `ChaosExperiment`, you can test how agents handle tool timeouts, network errors, and corrupted responses without modifying agent code.
+Chaos testing systematically evaluates agent resilience by injecting controlled failures into tool execution. Using `ChaosPlugin`, `ChaosCase`, and `ChaosExperiment`, you can test how agents handle tool timeouts, network errors, and corrupted responses without modifying agent code. A complete example can be found [here](https://github.com/strands-agents/harness-sdk/blob/main/site/docs/examples/evals-sdk/chaos_testing.py).
 
 This enables you to answer questions like:
 - Does the agent gracefully communicate failures to users?
@@ -65,7 +65,7 @@ Define your tools as usual with `@tool`, then create `ChaosCase` objects specify
 ```python
 from strands import tool
 from strands_evals.chaos import ChaosCase, Timeout
-from strands_evals.chaos.effects import NetworkError
+from strands_evals.chaos import NetworkError
 
 @tool
 def get_weather(city: str) -> str:
@@ -135,7 +135,7 @@ These effects cancel the tool call entirely and return an error:
 
 ```python
 from strands_evals.chaos import Timeout
-from strands_evals.chaos.effects import NetworkError, ExecutionError, ValidationError
+from strands_evals.chaos import NetworkError, ExecutionError, ValidationError
 
 effect_maps = {
     "timeout": {"tool_effects": {"my_tool": [Timeout()]}},
@@ -190,7 +190,7 @@ When you have multiple base cases and want to test across several failure scenar
 ```python
 from strands_evals import Case
 from strands_evals.chaos import ChaosCase, Timeout
-from strands_evals.chaos.effects import NetworkError
+from strands_evals.chaos import NetworkError
 
 # Define base test cases
 base_cases = [

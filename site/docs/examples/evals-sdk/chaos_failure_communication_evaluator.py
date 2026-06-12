@@ -5,17 +5,13 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from strands import Agent
-from strands_evals import StrandsEvalsTelemetry
 from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, Timeout, NetworkError
+from strands_evals.eval_task_handler import TracedHandler, eval_task
 from strands_evals.evaluators.chaos import FailureCommunicationEvaluator
-from strands_evals.mappers import StrandsInMemorySessionMapper
 from strands_evals.simulation import ToolSimulator
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
-
-telemetry = StrandsEvalsTelemetry().setup_in_memory_exporter()
-memory_exporter = telemetry.in_memory_exporter
 
 tool_simulator = ToolSimulator()
 
@@ -66,13 +62,15 @@ chaos_cases = [
 _search_tool = tool_simulator.get_tool("search_flights")
 _book_tool = tool_simulator.get_tool("book_flight")
 
-def travel_agent_task(case: ChaosCase) -> dict:
+@eval_task(TracedHandler())
+def travel_agent_task(case: ChaosCase):
     """Run the travel agent under chaos and return output + trajectory."""
     logger.info(f"\n{'─'*60}")
     logger.info(f"  Case: {case.name}")
     logger.info(f"  User: {case.input}")
+    logger.info(f"{'─'*60}")
 
-    agent = Agent(
+    return Agent(
         system_prompt=(
             "You are a travel booking assistant. Use the available tools to complete "
             "the user's request. Today's date is May 18, 2025.\n\n"
@@ -87,22 +85,6 @@ def travel_agent_task(case: ChaosCase) -> dict:
         callback_handler=None,
         trace_attributes={"gen_ai.conversation.id": case.session_id, "session.id": case.session_id},
     )
-
-    memory_exporter.clear()
-    try:
-        result = agent(case.input)
-        output = str(result)
-    except Exception as e:
-        output = f"Agent failed with error: {type(e).__name__}: {str(e)[:200]}"
-
-    logger.info(f"  Agent: {output[:300]}{'...' if len(output) > 300 else ''}")
-    logger.info(f"{'─'*60}")
-
-    finished_spans = memory_exporter.get_finished_spans()
-    mapper = StrandsInMemorySessionMapper()
-    session = mapper.map_to_session(finished_spans, session_id=case.session_id)
-
-    return {"output": output, "trajectory": session}
 
 experiment = ChaosExperiment(
     cases=chaos_cases,

@@ -93,17 +93,18 @@ Add `ChaosPlugin()` to the agent's plugins list. No other code changes are neede
 ```python
 from strands import Agent
 from strands_evals.chaos import ChaosPlugin
+from strands_evals.eval_task_handler import TracedHandler, eval_task
 
 chaos_plugin = ChaosPlugin()
 
-def task_function(case: ChaosCase) -> dict:
-    agent = Agent(
+@eval_task(TracedHandler())
+def task_function(case: ChaosCase):
+    return Agent(
         system_prompt="You are a helpful weather assistant.",
         plugins=[chaos_plugin],
-        callback_handler=None
+        callback_handler=None,
+        trace_attributes={"session.id": case.session_id},
     )
-    response = agent(case.input)
-    return {"output": str(response)}
 ```
 
 ### Run chaos experiment
@@ -221,6 +222,7 @@ Chaos testing works naturally with `ToolSimulator` for fully controlled evaluati
 ```python
 from strands import Agent
 from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, Timeout, CorruptValues
+from strands_evals.eval_task_handler import TracedHandler, eval_task
 from strands_evals.evaluators import GoalSuccessRateEvaluator
 from strands_evals.simulation import ToolSimulator
 from pydantic import BaseModel, Field
@@ -252,14 +254,14 @@ chaos_cases = [
 chaos_plugin = ChaosPlugin()
 _search_tool = tool_simulator.get_tool("web_search")
 
-def task_function(case: ChaosCase) -> dict:
-    agent = Agent(
+@eval_task(TracedHandler())
+def task_function(case: ChaosCase):
+    return Agent(
         tools=[_search_tool],
         plugins=[chaos_plugin],
-        callback_handler=None
+        callback_handler=None,
+        trace_attributes={"session.id": case.session_id},
     )
-    response = agent(case.input)
-    return {"output": str(response)}
 
 experiment = ChaosExperiment(
     cases=chaos_cases,

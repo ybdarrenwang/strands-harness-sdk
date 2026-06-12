@@ -34,7 +34,7 @@ This evaluator operates at the **SESSION_LEVEL**, evaluating the full conversati
 ## Parameters
 
 ### `model` (optional)
-- **Type**: `Union[Model, str, None]`
+- **Type**: `Model | str | None`
 - **Default**: `None` (uses default Bedrock model)
 - **Description**: The model to use as the judge.
 
@@ -61,15 +61,10 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from strands import Agent
-from strands_evals import StrandsEvalsTelemetry
-from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, Timeout
-from strands_evals.chaos import ExecutionError
+from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin, ExecutionError, Timeout
 from strands_evals.evaluators.chaos import RecoveryStrategyEvaluator
-from strands_evals.mappers import StrandsInMemorySessionMapper
+from strands_evals.eval_task_handler import TracedHandler, eval_task
 from strands_evals.simulation import ToolSimulator
-
-telemetry = StrandsEvalsTelemetry().setup_in_memory_exporter()
-memory_exporter = telemetry.in_memory_exporter
 
 tool_simulator = ToolSimulator()
 
@@ -92,6 +87,8 @@ def search_hotels(city: str, check_in: str, check_out: str) -> dict[str, Any]:
     pass
 
 chaos_plugin = ChaosPlugin()
+_flights_tool = tool_simulator.get_tool("search_flights")
+_hotels_tool = tool_simulator.get_tool("search_hotels")
 
 # Flight search times out but hotel search works: agent should pivot
 chaos_cases = [
@@ -107,11 +104,9 @@ chaos_cases = [
     ),
 ]
 
-_flights_tool = tool_simulator.get_tool("search_flights")
-_hotels_tool = tool_simulator.get_tool("search_hotels")
-
-def task_function(case: ChaosCase) -> dict:
-    agent = Agent(
+@eval_task(TracedHandler())
+def task_function(case: ChaosCase):
+    return Agent(
         system_prompt=(
             "You are a travel planning assistant. If a tool fails, "
             "try alternative tools that can partially fulfill the request. "
@@ -122,15 +117,6 @@ def task_function(case: ChaosCase) -> dict:
         callback_handler=None,
         trace_attributes={"session.id": case.session_id},
     )
-
-    memory_exporter.clear()
-    response = agent(case.input)
-
-    finished_spans = memory_exporter.get_finished_spans()
-    mapper = StrandsInMemorySessionMapper()
-    session = mapper.map_to_session(finished_spans, session_id=case.session_id)
-
-    return {"output": str(response), "trajectory": session}
 
 experiment = ChaosExperiment(
     cases=chaos_cases,

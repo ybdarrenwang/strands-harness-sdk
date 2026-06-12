@@ -101,6 +101,7 @@ chaos_plugin = ChaosPlugin()
 def task_function(case: ChaosCase):
     return Agent(
         system_prompt="You are a helpful weather assistant.",
+        tools=[get_weather],
         plugins=[chaos_plugin],
         callback_handler=None,
         trace_attributes={"session.id": case.session_id},
@@ -171,6 +172,8 @@ effect_maps = {
 Target multiple tools in a single case to simulate cascading failures:
 
 ```python
+from strands_evals.chaos import ChaosCase, Timeout, NetworkError, CorruptValues
+
 chaos_case = ChaosCase(
     name="total_chaos",
     input="Book me a flight to Paris",
@@ -292,24 +295,6 @@ Chaos testing ships with three specialized evaluators designed to assess agent b
 | [PartialCompletionEvaluator](/docs/user-guide/evals-sdk/evaluators/partial_completion_evaluator/) | Fraction of user goal achieved despite failures | Continuous (0.0 to 1.0) | ~1.0 when task completes fully |
 | [RecoveryStrategyEvaluator](/docs/user-guide/evals-sdk/evaluators/recovery_strategy_evaluator/) | Quality of recovery actions: exploration breadth, retry discipline, approach variation | Five-level (0.0, 0.25, 0.5, 0.75, 1.0) | 0.5 when no failures occur |
 
-```python
-from strands_evals.evaluators.chaos import (
-    FailureCommunicationEvaluator,
-    PartialCompletionEvaluator,
-    RecoveryStrategyEvaluator,
-)
-
-evaluators = [
-    PartialCompletionEvaluator(),         # How much was completed?
-    FailureCommunicationEvaluator(),      # Did the agent tell the user?
-    RecoveryStrategyEvaluator(),          # Did the agent try alternatives?
-]
-
-experiment = ChaosExperiment(cases=chaos_cases, evaluators=evaluators)
-report = experiment.run_evaluations(task=task_function)
-report.run_display()
-```
-
 ### Interpreting Results
 
 When reviewing evaluation outputs, look at evaluator scores together to identify patterns in your agent's failure-handling behavior:
@@ -328,6 +313,9 @@ Check the `reason` field in each evaluation output for specific details about wh
 Compare how different system prompts affect resilience:
 
 ```python
+from strands import Agent
+from strands_evals.chaos import ChaosCase, ChaosExperiment, ChaosPlugin
+from strands_evals.eval_task_handler import TracedHandler, eval_task
 from strands_evals.evaluators.chaos import PartialCompletionEvaluator
 
 def compare_agents_under_chaos(chaos_cases, configs):
@@ -336,14 +324,14 @@ def compare_agents_under_chaos(chaos_cases, configs):
 
     for config_name, system_prompt in configs.items():
         def make_task(prompt):
-            def task_function(case: ChaosCase) -> dict:
-                agent = Agent(
+            @eval_task(TracedHandler())
+            def task_function(case: ChaosCase):
+                return Agent(
                     system_prompt=prompt,
                     plugins=[ChaosPlugin()],
                     callback_handler=None,
+                    trace_attributes={"session.id": case.session_id},
                 )
-                response = agent(case.input)
-                return {"output": str(response)}
             return task_function
 
         experiment = ChaosExperiment(
@@ -379,8 +367,6 @@ experiment = ChaosExperiment(
     cases=sweep_cases,
     evaluators=[GoalSuccessRateEvaluator(), PartialCompletionEvaluator()]
 )
-report = experiment.run_evaluations(task=task_function)
-report.run_display()
 
 # Analyze: at what ratio does goal success drop below 0.5?
 # Gradual degradation = resilient agent; cliff-edge = fragile agent
@@ -391,9 +377,13 @@ report.run_display()
 Combine chaos testing with user simulation for multi-turn resilience evaluation:
 
 ```python
+from strands import Agent
 from strands_evals import ActorSimulator
+from strands_evals.chaos import ChaosCase, ChaosPlugin
+from strands_evals.eval_task_handler import TracedHandler, eval_task
 
-def task_function(case: ChaosCase) -> dict:
+@eval_task(TracedHandler())
+def task_function(case: ChaosCase):
     user_sim = ActorSimulator.from_case_for_user_simulator(
         case=case, max_turns=8
     )
@@ -402,6 +392,7 @@ def task_function(case: ChaosCase) -> dict:
         system_prompt="You are a helpful assistant.",
         plugins=[ChaosPlugin()],
         callback_handler=None,
+        trace_attributes={"session.id": case.session_id},
     )
 
     user_message = case.input
@@ -410,7 +401,7 @@ def task_function(case: ChaosCase) -> dict:
         user_result = user_sim.act(str(agent_response))
         user_message = str(user_result.structured_output.message)
 
-    return {"output": str(agent_response)}
+    return agent
 ```
 
 ## Best Practices
@@ -423,19 +414,19 @@ Always include a no-effect baseline to compare agent performance with and withou
 chaos_cases = ChaosCase.expand(cases, effect_maps, include_no_effect_baseline=True)
 ```
 
-### 2. Test One Failure at a Time First
+### 2. Gradually Increase Chaos Severity
 
-Start with your most critical tool against all effect types before expanding to multi-tool scenarios. Single-tool tests reveal individual tool robustness; compound tests reveal pipeline fragility:
+Start with single-tool failures to understand how your agent handles each failure point in isolation. Once you understand the baseline behavior, move to compound failures (multiple tools failing simultaneously) and then to advanced patterns like degradation sweeps. When a compound test fails, single-tool results tell you which tool failure is responsible:
 
 ```python
-# Single failure first
+# Start simple: one tool, one effect
 single_case = ChaosCase(
     name="search_fails",
     input="Find flights to Paris",
     effects={"tool_effects": {"search": [Timeout()]}},
 )
 
-# Compound (test after single failures are understood)
+# Then escalate: multiple tools failing together
 compound_case = ChaosCase(
     name="total_chaos",
     input="Find flights to Paris",

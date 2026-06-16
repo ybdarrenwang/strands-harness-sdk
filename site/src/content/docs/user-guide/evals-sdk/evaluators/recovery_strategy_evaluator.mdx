@@ -11,8 +11,8 @@ The `RecoveryStrategyEvaluator` scores the quality of an agent's recovery action
 
 ## Key Features
 
-- **Session-Level Evaluation**: Evaluates the full conversation trace including tool call patterns, retries, and alternative approaches
-- **Five-Level Scoring**: Granular scale from "No Recovery" to "Excellent Recovery"
+- **Trace-Level Evaluation**: Evaluates the full conversation trace including tool call patterns, retries, and alternative approaches
+- **Five-Level Scoring**: Granular scale from "Failure" to "Excellent"
 - **Multi-Dimensional Assessment**: Evaluates exploration breadth, retry discipline, and approach variation
 - **Structured Reasoning**: Provides step-by-step reasoning for each evaluation
 - **Async Support**: Supports both synchronous and asynchronous evaluation
@@ -29,7 +29,7 @@ Use the `RecoveryStrategyEvaluator` when you need to:
 
 ## Evaluation Level
 
-This evaluator operates at the **SESSION_LEVEL**, evaluating the full conversation trace including tool call patterns, retries, and alternative approaches.
+This evaluator operates at the **TRACE_LEVEL**, evaluating the full conversation trace including tool call patterns, retries, and alternative approaches.
 
 ## Parameters
 
@@ -42,11 +42,11 @@ This evaluator operates at the **SESSION_LEVEL**, evaluating the full conversati
 
 | Rating | Score | Description |
 |--------|-------|-------------|
-| No Recovery | 0.0 | Agent gives up immediately or crashes on first failure |
-| Poor Recovery | 0.25 | Agent retries the same failed action with no variation |
-| Neutral | 0.5 | Minimal recovery, or no failures occurred to recover from |
-| Good Recovery | 0.75 | Agent retries with variation or tries alternative tools |
-| Excellent Recovery | 1.0 | Agent demonstrates sophisticated recovery: retries, fallbacks, escalation, and adaptation |
+| Failure | 0.0 | Agent gives up immediately or crashes on first failure |
+| Poor | 0.25 | Agent retries the same failed action with no variation |
+| Acceptable | 0.5 | Minimal recovery, or no failures occurred to recover from |
+| Good | 0.75 | Agent retries with variation or tries alternative tools |
+| Excellent | 1.0 | Agent demonstrates sophisticated recovery: retries, fallbacks, escalation, and adaptation |
 
 A response passes the evaluation if the score is >= 0.5.
 
@@ -137,7 +137,7 @@ The `RecoveryStrategyEvaluator` returns `EvaluationOutput` objects with:
 - **score**: Float (0.0, 0.25, 0.5, 0.75, or 1.0)
 - **test_pass**: `True` if score >= 0.5, `False` otherwise
 - **reason**: Step-by-step reasoning explaining the evaluation
-- **label**: One of the categorical labels (e.g., "Good Recovery", "Excellent Recovery")
+- **label**: One of the categorical labels (e.g., "Good", "Excellent")
 
 ## What Gets Evaluated
 
@@ -177,7 +177,7 @@ Tool: search_flights -> Timeout
 Agent: [retries search_flights with broader date range -> still fails]
 Agent: [calls search_hotels for the destination instead]
 Final: "I couldn't find flight info, but I found hotels in Tokyo for your dates."
-Evaluation: Excellent Recovery (1.0) - Tried variation, then pivoted to alternative
+Evaluation: Excellent (1.0) - Tried variation, then pivoted to alternative
 ```
 
 ### Scenario 2: Good Recovery
@@ -185,7 +185,7 @@ Evaluation: Excellent Recovery (1.0) - Tried variation, then pivoted to alternat
 Tool: search_flights -> NetworkError
 Agent: [retries search_flights once -> still fails]
 Final: "Flight search is unavailable. Please try again later."
-Evaluation: Good Recovery (0.75) - Retried once, then communicated clearly
+Evaluation: Good (0.75) - Retried once, then communicated clearly
 ```
 
 ### Scenario 3: Poor Recovery
@@ -193,14 +193,14 @@ Evaluation: Good Recovery (0.75) - Retried once, then communicated clearly
 Tool: search_flights -> Timeout
 Agent: [retries search_flights 5 times with identical parameters]
 Final: "I'm having trouble finding flights."
-Evaluation: Poor Recovery (0.25) - Excessive retries with no variation
+Evaluation: Poor (0.25) - Excessive retries with no variation
 ```
 
 ### Scenario 4: No Recovery
 ```
 Tool: search_flights -> ExecutionError
 Agent: "I can't help with that."
-Evaluation: No Recovery (0.0) - Gave up immediately without any attempt
+Evaluation: Failure (0.0) - Gave up immediately without any attempt
 ```
 
 ## Common Issues and Solutions

@@ -11,7 +11,7 @@ The `PartialCompletionEvaluator` scores what fraction of the user's goal was ach
 
 ## Key Features
 
-- **Session-Level Evaluation**: Evaluates the full conversation trace to assess progress across all task sub-steps
+- **Trace-Level Evaluation**: Evaluates the full conversation trace to assess progress across all task sub-steps
 - **Continuous Scoring**: Fine-grained 0.0 to 1.0 scale captures partial progress
 - **Sub-Goal Decomposition**: Evaluates completion of individual task steps
 - **Structured Reasoning**: Provides step-by-step reasoning for each evaluation
@@ -29,7 +29,7 @@ Use the `PartialCompletionEvaluator` when you need to:
 
 ## Evaluation Level
 
-This evaluator operates at the **SESSION_LEVEL**, evaluating the full conversation trace to assess progress across all task sub-steps.
+This evaluator operates at the **TRACE_LEVEL**, evaluating the full conversation trace to assess progress across all task sub-steps.
 
 ## Parameters
 

@@ -11,8 +11,8 @@ The `FailureCommunicationEvaluator` assesses how well an agent communicates fail
 
 ## Key Features
 
-- **Session-Level Evaluation**: Evaluates the full conversation trace including tool call results and agent responses
-- **Five-Level Scoring**: Granular scale from "No Communication" to "Excellent Communication"
+- **Trace-Level Evaluation**: Evaluates the full conversation trace including tool call results and agent responses
+- **Five-Level Scoring**: Granular scale from "Failure" to "Excellent"
 - **Multi-Dimensional Assessment**: Evaluates clarity, actionability, transparency, and tone
 - **Structured Reasoning**: Provides step-by-step reasoning for each evaluation
 - **Async Support**: Supports both synchronous and asynchronous evaluation
@@ -29,7 +29,7 @@ Use the `FailureCommunicationEvaluator` when you need to:
 
 ## Evaluation Level
 
-This evaluator operates at the **SESSION_LEVEL**, evaluating the full conversation trace including tool call results and agent responses.
+This evaluator operates at the **TRACE_LEVEL**, evaluating the full conversation trace including tool call results and agent responses.
 
 ## Parameters
 
@@ -42,11 +42,11 @@ This evaluator operates at the **SESSION_LEVEL**, evaluating the full conversati
 
 | Rating | Score | Description |
 |--------|-------|-------------|
-| No Communication | 0.0 | Agent silently ignores failures, fabricates data, or crashes |
-| Poor Communication | 0.25 | Agent vaguely acknowledges an issue without useful information |
-| Neutral | 0.5 | Mixed communication, or no failures occurred to communicate |
-| Good Communication | 0.75 | Agent clearly explains the failure and suggests next steps |
-| Excellent Communication | 1.0 | Agent transparently explains what failed, why, and provides actionable alternatives |
+| Failure | 0.0 | Agent silently ignores failures, fabricates data, or crashes |
+| Poor | 0.25 | Agent vaguely acknowledges an issue without useful information |
+| Acceptable | 0.5 | Mixed communication, or no failures occurred to communicate |
+| Good | 0.75 | Agent clearly explains the failure and suggests next steps |
+| Excellent | 1.0 | Agent transparently explains what failed, why, and provides actionable alternatives |
 
 A response passes the evaluation if the score is >= 0.5.
 
@@ -122,7 +122,7 @@ The `FailureCommunicationEvaluator` returns `EvaluationOutput` objects with:
 - **score**: Float (0.0, 0.25, 0.5, 0.75, or 1.0)
 - **test_pass**: `True` if score >= 0.5, `False` otherwise
 - **reason**: Step-by-step reasoning explaining the evaluation
-- **label**: One of the categorical labels (e.g., "Good Communication", "Excellent Communication")
+- **label**: One of the categorical labels (e.g., "Good", "Excellent")
 
 ## What Gets Evaluated
 
@@ -163,7 +163,7 @@ Tool: search_flights -> Timeout
 Agent: "I'm sorry, but the flight search service is currently experiencing delays
 and couldn't complete your request. You could try again in a few minutes, or I
 can help you explore alternative options like checking a different travel date."
-Evaluation: Excellent Communication (1.0) - Clear, transparent, actionable
+Evaluation: Excellent (1.0) - Clear, transparent, actionable
 ```
 
 ### Scenario 2: Good Communication
@@ -171,14 +171,14 @@ Evaluation: Excellent Communication (1.0) - Clear, transparent, actionable
 Tool: search_flights -> NetworkError
 Agent: "I wasn't able to search for flights right now due to a connection issue.
 Please try again shortly."
-Evaluation: Good Communication (0.75) - Acknowledges failure, suggests retry
+Evaluation: Good (0.75) - Acknowledges failure, suggests retry
 ```
 
 ### Scenario 3: No Communication
 ```
 Tool: search_flights -> Timeout
 Agent: "There are no flights available for that route."
-Evaluation: No Communication (0.0) - Fabricates results instead of reporting failure
+Evaluation: Failure (0.0) - Fabricates results instead of reporting failure
 ```
 
 ## Common Issues and Solutions

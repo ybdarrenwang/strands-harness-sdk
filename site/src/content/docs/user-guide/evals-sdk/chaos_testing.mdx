@@ -48,7 +48,7 @@ Chaos testing integrates with Strands' plugin system via `BeforeToolCallEvent` a
 1. **ChaosCase**: Extends `Case` with an `effects` field mapping tool names to failure effects
 2. **ChaosPlugin**: A Strands plugin that intercepts tool calls and applies effects transparently
 3. **ChaosExperiment**: Composes the base `Experiment` to manage chaos context per case
-4. **ChaosEffect**: A hierarchy of pre-hook effects (cancel tool calls) and post-hook effects (corrupt responses)
+4. **ChaosEffect**: A hierarchy of pre-hook effects (cancel tool calls) and post-hook effects (corrupt responses). Each tool can have only one effect per `ChaosCase`; use separate cases to test different failure modes for the same tool.
 
 The workflow:
 1. You define `ChaosCase` objects with effects specifying which tools should fail and how
@@ -64,8 +64,7 @@ Define your tools as usual with `@tool`, then create `ChaosCase` objects specify
 
 ```python
 from strands import tool
-from strands_evals.chaos import ChaosCase, Timeout
-from strands_evals.chaos import NetworkError
+from strands_evals.chaos import ChaosCase, NetworkError, Timeout
 
 @tool
 def get_weather(city: str) -> str:
@@ -74,7 +73,7 @@ def get_weather(city: str) -> str:
 
 chaos_cases = [
     ChaosCase(
-        name="search_timeout",
+        name="weather_timeout",
         input="What's the weather in Seattle?",
         effects={"tool_effects": {"get_weather": [Timeout()]}},
     ),
@@ -136,8 +135,7 @@ These effects cancel the tool call entirely and return an error:
 | `ValidationError` | Simulates invalid input/output validation failure |
 
 ```python
-from strands_evals.chaos import Timeout
-from strands_evals.chaos import NetworkError, ExecutionError, ValidationError
+from strands_evals.chaos import ExecutionError, NetworkError, Timeout, ValidationError
 
 effect_maps = {
     "timeout": {"tool_effects": {"my_tool": [Timeout()]}},
@@ -187,14 +185,15 @@ chaos_case = ChaosCase(
 )
 ```
 
+> **Note:** Each tool can only have **one effect** per `ChaosCase`. Passing multiple effects for the same tool (e.g., `"my_tool": [Timeout(), NetworkError()]`) raises a `ValueError`. To test multiple failure modes for a single tool, create separate `ChaosCase` instances — one per effect. Note that pre-hook effects are inherently mutually exclusive (only one can cancel a tool call), while the runtime supports composing multiple post-hook effects sequentially — this validator constraint may be relaxed in a future release.
+
 ## Expanding Cases Across Multiple Effects
 
 When you have multiple base cases and want to test across several failure scenarios, use `ChaosCase.expand()` to generate the Cartesian product:
 
 ```python
 from strands_evals import Case
-from strands_evals.chaos import ChaosCase, Timeout
-from strands_evals.chaos import NetworkError
+from strands_evals.chaos import ChaosCase, NetworkError, Timeout
 
 # Define base test cases
 base_cases = [

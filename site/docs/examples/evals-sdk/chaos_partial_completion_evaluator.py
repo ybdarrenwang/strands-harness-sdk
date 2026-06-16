@@ -50,7 +50,7 @@ chaos_plugin = ChaosPlugin()
 
 # Two cases that test partial completion:
 # 1. Search works (truncated) but booking fails — user gets degraded flight info but no reservation
-# 2. Search and booking work but confirmation fails — user gets most of what they asked for
+# 2. Only confirmation fails — user gets search results and booking but no confirmation email
 chaos_cases = [
     ChaosCase(
         name="search_degraded_booking_fails",
